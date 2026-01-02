@@ -1,0 +1,5 @@
+{
+  "name": "SnakeCraft",
+  "description": "A modern, smooth 2D Snake game with Minecraft-inspired block breaking, RPG elements, boss fights, combo systems, and multiple thematic worlds.",
+  "requestFramePermissions": []
+}
