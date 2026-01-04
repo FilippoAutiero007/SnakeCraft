@@ -118,9 +118,10 @@ export const generateBlock = (
 
 // --- ITEM SPAWNING LOGIC ---
 
-export const getItemToSpawn = (level: number): BlockType => {
+export const getItemToSpawn = (level: number, biome: BiomeType): BlockType => {
     const rand = Math.random();
     // 76% Chocolate, 14% Gold, 10% PowerUp
+    // Future: could use biome to influence spawn rates
     if (rand < 0.76) return BlockType.DIRT;
     else if (rand < 0.90) return BlockType.GOLD;
     else return BlockType.POWERUP_BOX;

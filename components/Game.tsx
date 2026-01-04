@@ -9,8 +9,7 @@ import { Shop } from './Shop';
 import { useGameInput } from '../hooks/useGameInput';
 import { useGameState } from '../hooks/useGameState';
 import { updateGame, recoverFromStun } from '../utils/engine/core';
-import { createExplosion } from '../utils/effects';
-import { BLOCK_COLORS } from '../constants';
+import { handleLaserAbility } from '../utils/engine/entities';
 
 interface GameProps {
   onGameOver: (score: number, bossDefeated: boolean) => void;
@@ -51,60 +50,23 @@ const Game: React.FC<GameProps> = ({
   // --- Input Management ---
   const triggerAbility = () => {
     if (refs.activePowerUp.current === PowerUpType.NONE && !isTutorial) return;
-    const head = refs.snake.current[0];
-    const dir = directionRef.current;
     
-    audio.playSound('LASER');
-    let beamLen = 0;
-    let cx = head.x, cy = head.y;
-    
-    for(let i=0; i<15; i++) {
-      if (dir === Direction.UP) cy--;
-      if (dir === Direction.DOWN) cy++;
-      if (dir === Direction.LEFT) cx--;
-      if (dir === Direction.RIGHT) cx++;
-      
-      const key = `${cx},${cy}`;
-      const block = generateBlock(cx, cy, level, isTutorial, refs.worldMap.current);
-      
-      if (block === BlockType.BEDROCK) break;
-      
-      const mapBlock = refs.worldMap.current.get(key);
-      const isMapItem = [BlockType.DIRT, BlockType.GOLD, BlockType.POWERUP_BOX, BlockType.TRAP].includes(block);
-      const isWall = block === BlockType.STONE;
+    const beamLen = handleLaserAbility(
+        refs, 
+        refs.snake.current[0], 
+        directionRef.current, 
+        level, 
+        isTutorial, 
+        (name) => audio.playSound(name)
+    );
 
-      if (isMapItem || isWall) {
-         if (isWall) {
-             refs.worldMap.current.set(key, BlockType.EMPTY);
-             audio.playSound('BREAK');
-             createExplosion(cx, cy, BLOCK_COLORS[BlockType.STONE], 8, refs.particles.current);
-         } else {
-             refs.worldMap.current.delete(key);
-             createExplosion(cx, cy, BLOCK_COLORS[block], 6, refs.particles.current);
-             if (!isTutorial) {
-                 refs.itemCount.current = Math.max(0, refs.itemCount.current - 1);
-             }
-         }
-         refs.score.current += 5;
-      }
-      
-      if (refs.boss.current && Math.abs(refs.boss.current.position.x - cx) < 2 && Math.abs(refs.boss.current.position.y - cy) < 2) {
-         refs.boss.current.hp -= 20; 
-         audio.playSound('BOSS_HIT');
-         createExplosion(cx, cy, 'orange', 5, refs.particles.current);
-         if (refs.boss.current.hp <= 0) {
-            refs.score.current += 1000;
-            refs.boss.current = null;
-            audio.playSound('POWERUP');
-            refs.projectiles.current = []; 
-            refs.aoeZones.current = [];
-            createExplosion(cx, cy, 'red', 50, refs.particles.current);
-         }
-         break;
-      }
-      beamLen++;
-    }
-    refs.beams.current.push({ x: head.x, y: head.y, life: 1.0, direction: dir, length: beamLen });
+    refs.beams.current.push({ 
+        x: refs.snake.current[0].x, 
+        y: refs.snake.current[0].y, 
+        life: 1.0, 
+        direction: directionRef.current, 
+        length: beamLen 
+    });
     
     if (isTutorial && refs.tutorialStep.current === 4) {
       setTimeout(() => {
@@ -152,11 +114,14 @@ const Game: React.FC<GameProps> = ({
     // Stun Recovery Logic
     if (refs.isStunned.current) {
         refs.frame.current++; 
+        // Only recover if player presses a key (handled in Game.tsx)
+        // But we allow buffering one input for recovery
         if (inputQueueRef.current.length > 0) {
-            inputQueueRef.current = []; 
             recoverFromStun(refs, { 
                 level, isTutorial, upgrades, onGameOver, setTutorialStepUI, directionRef, inputQueueRef, setShowPressKey 
             });
+            // Clear queue after recovery to prevent double moves
+            inputQueueRef.current = [];
         }
     } else {
         refs.tickAccumulator.current += deltaTime;

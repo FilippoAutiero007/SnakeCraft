@@ -1,7 +1,8 @@
 
-import { Boss, Projectile, AoEZone, SnakeSegment, BlockType } from '../../types';
-import { getLevelConfig } from '../../constants';
+import { Boss, Projectile, AoEZone, SnakeSegment, BlockType, Direction } from '../../types';
+import { getLevelConfig, BLOCK_COLORS } from '../../constants';
 import { generateBlock } from '../logic';
+import { createExplosion } from '../effects';
 
 type SoundPlayer = (name: 'MOVE' | 'BREAK' | 'EAT' | 'DAMAGE' | 'POWERUP' | 'BOSS_HIT' | 'LASER') => void;
 
@@ -175,4 +176,77 @@ export const updateBossBehavior = (
        onDamagePlayer(Math.floor(5 * damageMult));
        if (tick % 20 === 0) playSound('DAMAGE');
     }
+};
+
+export const handleLaserAbility = (
+    state: any,
+    head: SnakeSegment,
+    direction: Direction,
+    level: number,
+    isTutorial: boolean,
+    playSound: SoundPlayer
+): number => {
+    playSound('LASER');
+    let beamLen = 0;
+    let cx = head.x, cy = head.y;
+    const maxLen = 15;
+
+    for (let i = 0; i < maxLen; i++) {
+        if (direction === Direction.UP) cy--;
+        else if (direction === Direction.DOWN) cy++;
+        else if (direction === Direction.LEFT) cx--;
+        else if (direction === Direction.RIGHT) cx++;
+
+        const key = `${cx},${cy}`;
+        const block = generateBlock(cx, cy, level, isTutorial, state.worldMap.current);
+
+        if (block === BlockType.BEDROCK) break;
+
+        const isMapItem = [BlockType.DIRT, BlockType.GOLD, BlockType.POWERUP_BOX, BlockType.TRAP].includes(block);
+        const isWall = block === BlockType.STONE;
+
+        if (isMapItem || isWall) {
+            if (isWall) {
+                state.worldMap.current.set(key, BlockType.EMPTY);
+                playSound('BREAK');
+                createExplosion(cx, cy, BLOCK_COLORS[BlockType.STONE], 8, state.particles.current);
+            } else {
+                state.worldMap.current.delete(key);
+                createExplosion(cx, cy, BLOCK_COLORS[block], 6, state.particles.current);
+                if (!isTutorial) {
+                    state.itemCount.current = Math.max(0, state.itemCount.current - 1);
+                }
+            }
+            state.score.current += 5;
+        }
+
+        // Improved Boss Hit Detection using Raycasting-like logic
+        if (state.boss.current) {
+            const boss = state.boss.current;
+            const bossSize = 1.8; // Boss hit box size
+            const distSq = distToSegmentSquared(
+                boss.position.x, boss.position.y, 
+                cx - 0.5, cy - 0.5, cx + 0.5, cy + 0.5
+            );
+
+            if (distSq < (bossSize * bossSize)) {
+                boss.hp -= 20;
+                playSound('BOSS_HIT');
+                createExplosion(cx, cy, 'orange', 5, state.particles.current);
+                
+                if (boss.hp <= 0) {
+                    state.score.current += 1000;
+                    state.boss.current = null;
+                    playSound('POWERUP');
+                    state.projectiles.current = [];
+                    state.aoeZones.current = [];
+                    createExplosion(cx, cy, 'red', 50, state.particles.current);
+                }
+                beamLen++;
+                break; // Laser stops at boss
+            }
+        }
+        beamLen++;
+    }
+    return beamLen;
 };
