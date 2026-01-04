@@ -2,25 +2,11 @@
 import { BlockType, BiomeType } from '../../types';
 import { BLOCK_COLORS } from '../../constants';
 import { getBiome } from '../logic';
-import { drawHedge, drawMossyRock } from './assets';
+import { drawHedge } from './assets';
+import { drawOptimizedRock } from '../../src/graphics/rock-renderer';
 
-// Asset Caching
+// Asset Caching for Gold and Chocolate
 const assetCache = new Map<string, HTMLCanvasElement>();
-
-const getBufferedRock = (size: number): HTMLCanvasElement => {
-    const key = `ROCK_${size}`;
-    if (assetCache.has(key)) return assetCache.get(key)!;
-
-    const canvas = document.createElement('canvas');
-    canvas.width = size;
-    canvas.height = size;
-    const ctx = canvas.getContext('2d');
-    if (ctx) {
-        drawMossyRock(ctx, 0, 0, size);
-    }
-    assetCache.set(key, canvas);
-    return canvas;
-};
 
 const drawGoldIngot = (ctx: CanvasRenderingContext2D, px: number, py: number, s: number, goldVar: number, goldPoints: number) => {
     const drawSingleIngot = (ix: number, iy: number, iw: number, ih: number) => {
@@ -130,7 +116,7 @@ export const drawBlock = (
         return;
     }
     if (block === BlockType.STONE) {
-        ctx.drawImage(getBufferedRock(s), px, py);
+        drawOptimizedRock(ctx, px, py, s);
         return;
     }
     if (block === BlockType.TRAP) {

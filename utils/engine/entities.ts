@@ -3,6 +3,7 @@ import { Boss, Projectile, AoEZone, SnakeSegment, BlockType, Direction } from '.
 import { getLevelConfig, BLOCK_COLORS } from '../../constants';
 import { generateBlock } from '../logic';
 import { createExplosion } from '../effects';
+import { getSmartMove } from '../../src/ai/pathfinding';
 
 type SoundPlayer = (name: 'MOVE' | 'BREAK' | 'EAT' | 'DAMAGE' | 'POWERUP' | 'BOSS_HIT' | 'LASER') => void;
 
@@ -153,7 +154,7 @@ export const updateBossBehavior = (
         }
     }
 
-    // --- Movement Logic ---
+    // --- Movement Logic with A* Pathfinding ---
     const moveInterval = isEnraged ? 8 : 15;
     if (tick % moveInterval === 0 && boss.phase !== 'CHARGING') {
        if (distToPlayer > 18) {
@@ -161,13 +162,16 @@ export const updateBossBehavior = (
            boss.position.x = head.x + (Math.random() > 0.5 ? 8 : -8);
            boss.position.y = head.y + (Math.random() > 0.5 ? 8 : -8);
        } else {
-           // Chase
-           const dx = head.x - boss.position.x;
-           const dy = head.y - boss.position.y;
-           
-           // Simple pathfinding (move in largest delta direction)
-           if (Math.abs(dx) > Math.abs(dy)) boss.position.x += Math.sign(dx);
-           else boss.position.y += Math.sign(dy);
+           // Smart pathfinding to avoid walls
+           const nextPos = getSmartMove(
+               boss.position.x, 
+               boss.position.y, 
+               head.x, 
+               head.y, 
+               worldMap
+           );
+           boss.position.x = nextPos.x;
+           boss.position.y = nextPos.y;
        }
     }
 
