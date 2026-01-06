@@ -3,16 +3,24 @@ import React, { useState, useEffect } from 'react';
 import Game from './components/Game';
 import MainMenu from './components/MainMenu';
 import GameOver from './components/GameOver';
+import { AuthButton } from './src/components/auth/AuthButton';
+import { Leaderboard, saveLeaderboardScore } from './src/components/ui/Leaderboard';
+import { SettingsModal, useSettings } from './src/components/ui/SettingsModal';
+import { useUser } from '@clerk/clerk-react';
 
 import { GameState, PlayerStats, UpgradeType, ConsumableType } from './types';
 import { SKINS, BACKGROUNDS, UPGRADES, CONSUMABLES } from './constants';
 
 const App: React.FC = () => {
+  const { user } = useUser();
+  const [settings, updateSettings] = useSettings();
   const [gameState, setGameState] = useState<GameState>(GameState.MENU);
   const [currentLevel, setCurrentLevel] = useState(1);
   const [lastScore, setLastScore] = useState(0);
   const [bossDefeated, setBossDefeated] = useState(false);
   const [isTutorialMode, setIsTutorialMode] = useState(false);
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
 
   // Persistence
   const [stats, setStats] = useState<PlayerStats>(() => {
@@ -117,6 +125,12 @@ const App: React.FC = () => {
       };
       
       localStorage.setItem('snakecraft_stats_v3', JSON.stringify(newState));
+      
+      // Save to leaderboard if user is logged in
+      if (user && score > 0) {
+        saveLeaderboardScore(score, currentLevel, user);
+      }
+      
       return newState;
     });
     
@@ -193,6 +207,9 @@ const App: React.FC = () => {
 
   return (
     <div className="w-full h-full bg-gray-900 text-white font-sans select-none">
+      {/* Auth Button (always visible) */}
+      <AuthButton />
+
       {gameState === GameState.MENU && (
         <MainMenu 
           stats={stats} 
@@ -204,6 +221,8 @@ const App: React.FC = () => {
           onEquipBg={equipBg}
           onBuyUpgrade={buyUpgrade}
           onBuyConsumable={buyConsumable}
+          onShowLeaderboard={() => setShowLeaderboard(true)}
+          onShowSettings={() => setShowSettings(true)}
         />
       )}
       
@@ -224,6 +243,7 @@ const App: React.FC = () => {
           onEquipSkin={equipSkin}
           onBuyBg={buyBg}
           onEquipBg={equipBg}
+          settings={settings}
         />
       )}
 
@@ -233,10 +253,23 @@ const App: React.FC = () => {
           bossDefeated={bossDefeated}
           onRestart={() => setGameState(GameState.PLAYING)}
           onHome={() => setGameState(GameState.MENU)}
+          onShowLeaderboard={() => setShowLeaderboard(true)}
         />
       )}
 
+      {/* Modals */}
+      {showLeaderboard && (
+        <Leaderboard onClose={() => setShowLeaderboard(false)} />
+      )}
 
+      {showSettings && (
+        <SettingsModal
+          isOpen={showSettings}
+          onClose={() => setShowSettings(false)}
+          onSave={updateSettings}
+          currentSettings={settings}
+        />
+      )}
     </div>
   );
 };

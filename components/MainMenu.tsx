@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { PlayerStats, UpgradeType, ConsumableType } from '../types';
 import { getLevelConfig } from '../constants';
-import { Play, ShoppingBag, ArrowLeft, Crown, BookOpen } from 'lucide-react';
+import { Play, ShoppingBag, ArrowLeft, Crown, BookOpen, Settings } from 'lucide-react';
 import { audio } from '../utils/audio';
 import { Shop } from './Shop';
 import { ChocolateIcon } from './Icons';
@@ -17,6 +17,8 @@ interface MainMenuProps {
   onEquipBg: (id: string) => void;
   onBuyUpgrade: (id: UpgradeType) => void;
   onBuyConsumable: (id: ConsumableType) => void;
+  onShowLeaderboard?: () => void;
+  onShowSettings?: () => void;
 }
 
 const MOCK_LEADERBOARD = [
@@ -31,7 +33,9 @@ const MainMenu: React.FC<MainMenuProps> = ({
   stats, onStart, onTutorial,
   onBuySkin, onEquipSkin, 
   onBuyBg, onEquipBg, 
-  onBuyUpgrade, onBuyConsumable 
+  onBuyUpgrade, onBuyConsumable,
+  onShowLeaderboard,
+  onShowSettings
 }) => {
   const [view, setView] = useState<'MAIN' | 'SHOP' | 'LEVELS' | 'LEADERBOARD'>('MAIN');
 
@@ -125,18 +129,28 @@ const MainMenu: React.FC<MainMenuProps> = ({
                 <span className="font-bold text-lg tracking-wide text-gray-200">SHOP</span>
               </button>
               
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-3">
                 <button 
                   onClick={handleTutorial} 
-                  className="group relative bg-gray-900/50 border border-white/5 hover:bg-gray-900/80 h-14 rounded-xl flex items-center justify-center gap-3 font-bold backdrop-blur-sm transition-all text-gray-400 hover:text-white"
+                  className="group relative bg-gray-900/50 border border-white/5 hover:bg-gray-900/80 h-14 rounded-xl flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2 font-bold backdrop-blur-sm transition-all text-gray-400 hover:text-white"
                 >
-                  <BookOpen size={18} className="text-blue-400 group-hover:text-blue-300 transition-colors" /> TUTORIAL
+                  <BookOpen size={18} className="text-blue-400 group-hover:text-blue-300 transition-colors" />
+                  <span className="text-xs md:text-sm">TUTORIAL</span>
                 </button>
                 <button 
-                  onClick={() => setView('LEADERBOARD')}
-                  className="group bg-gray-900/50 border border-white/5 hover:bg-gray-900/80 h-14 rounded-xl flex items-center justify-center gap-3 font-bold backdrop-blur-sm transition-all text-gray-400 hover:text-white"
+                  onClick={onShowLeaderboard}
+                  className="group bg-gray-900/50 border border-white/5 hover:bg-gray-900/80 h-14 rounded-xl flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2 font-bold backdrop-blur-sm transition-all text-gray-400 hover:text-white"
                 >
-                  <Crown size={18} className="text-purple-400 group-hover:text-purple-300 transition-colors" /> RANKS
+                  <Crown size={18} className="text-purple-400 group-hover:text-purple-300 transition-colors" />
+                  <span className="text-xs md:text-sm">RANKS</span>
+                </button>
+                <button 
+                  onClick={onShowSettings}
+                  className="group bg-gray-900/50 border border-white/5 hover:bg-gray-900/80 h-14 rounded-xl flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2 font-bold backdrop-blur-sm transition-all text-gray-400 hover:text-white"
+                >
+                  <Settings size={18} className="text-green-400 group-hover:text-green-300 transition-colors" />
+                  <span className="text-xs md:text-sm hidden md:inline">SETTINGS</span>
+                  <span className="text-xs md:text-sm md:hidden">⚙️</span>
                 </button>
               </div>
             </div>
