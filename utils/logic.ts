@@ -84,6 +84,10 @@ export const generateBlock = (
   }
 
   // --- B. HAZARD GENERATION (Organic Lava Pools) ---
+  // Prevent lava near spawn area (radius ~15 blocks from origin)
+  const distanceFromSpawn = Math.sqrt(x * x + y * y);
+  const safeZoneRadius = 20;
+  
   if (biome === BiomeType.GRASSLAND || biome === BiomeType.OBSIDIAN_WASTE) {
       const scale = 0.08; 
       const organicNoise = Math.sin(x * scale) + Math.cos(y * scale * 0.9) + Math.sin((x * 0.5 + y * 0.5) * scale) * 0.5;
@@ -94,17 +98,20 @@ export const generateBlock = (
       let magmaThreshold = 10.0;
 
       if (biome === BiomeType.GRASSLAND) {
-          lavaThreshold = 2.4;  
-          magmaThreshold = 2.25; 
+          lavaThreshold = 2.6;  // Increased from 2.4 to make lava rarer
+          magmaThreshold = 2.45; 
       } else if (biome === BiomeType.OBSIDIAN_WASTE) {
-          lavaThreshold = 0.8; 
-          magmaThreshold = 0.75; 
+          lavaThreshold = 1.0;  // Increased from 0.8
+          magmaThreshold = 0.9; 
       }
 
-      if (organicNoise > lavaThreshold) {
-          return BlockType.LAVA;
-      } else if (organicNoise > magmaThreshold && hasMagmaRing) {
-          return BlockType.MAGMA;
+      // Only spawn lava/magma outside safe zone
+      if (distanceFromSpawn > safeZoneRadius) {
+          if (organicNoise > lavaThreshold) {
+              return BlockType.LAVA;
+          } else if (organicNoise > magmaThreshold && hasMagmaRing) {
+              return BlockType.MAGMA;
+          }
       }
   }
 

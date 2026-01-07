@@ -27,13 +27,15 @@ interface GameProps {
   onEquipSkin?: (color: string) => void;
   onBuyBg?: (id: string, price: number) => void;
   onEquipBg?: (className: string) => void;
+  settings?: any; // GameSettings from SettingsModal
 }
 
 const Game: React.FC<GameProps> = ({ 
   onGameOver, onExit, currentSkin, level, isTutorial = false,
   upgrades = {} as Record<UpgradeType, number>, 
   inventory = {} as Record<ConsumableType, number>,
-  stats, onBuyUpgrade, onBuyConsumable, onBuySkin, onEquipSkin, onBuyBg, onEquipBg
+  stats, onBuyUpgrade, onBuyConsumable, onBuySkin, onEquipSkin, onBuyBg, onEquipBg,
+  settings
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
