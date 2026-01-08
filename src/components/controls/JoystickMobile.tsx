@@ -1,152 +1,110 @@
-import React, { useRef, useEffect, useState } from 'react';
+"use client";
 
-interface JoystickProps {
-  onMove: (x: number, y: number) => void;
-  size?: number;
-  position?: 'left' | 'right';
+import React, { useEffect, useRef, useState } from "react";
+
+interface JoystickMobileProps {
+  onInput: (x: number, y: number) => void;
 }
 
-export const JoystickMobile: React.FC<JoystickProps> = ({ 
-  onMove, 
-  size = 120,
-  position = 'right'
-}) => {
+export default function JoystickMobile({ onInput }: JoystickMobileProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [isActive, setIsActive] = useState(false);
-  const [stickPos, setStickPos] = useState({ x: 0, y: 0 });
-  const touchIdRef = useRef<number | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const ctx = canvas.getContext('2d');
+    const rect = canvas.getBoundingClientRect();
+    const radius = Math.min(rect.width, rect.height) / 2;
+    const centerX = radius;
+    const centerY = radius;
+
+    const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // Clear canvas
-    ctx.clearRect(0, 0, size, size);
+    // Disegna joystick
+    const drawJoystick = (stickX: number, stickY: number) => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    const centerX = size / 2;
-    const centerY = size / 2;
-    const baseRadius = size * 0.4;
-    const stickRadius = size * 0.2;
-
-    // Draw base circle (outer boundary)
-    ctx.beginPath();
-    ctx.arc(centerX, centerY, baseRadius, 0, Math.PI * 2);
-    ctx.fillStyle = isActive 
-      ? 'rgba(139, 92, 246, 0.3)' 
-      : 'rgba(100, 100, 100, 0.3)';
-    ctx.fill();
-    ctx.strokeStyle = isActive ? 'rgba(139, 92, 246, 0.8)' : 'rgba(150, 150, 150, 0.5)';
-    ctx.lineWidth = 3;
-    ctx.stroke();
-
-    // Draw stick (movable circle)
-    ctx.beginPath();
-    ctx.arc(centerX + stickPos.x, centerY + stickPos.y, stickRadius, 0, Math.PI * 2);
-    ctx.fillStyle = isActive 
-      ? 'rgba(168, 85, 247, 0.9)' 
-      : 'rgba(150, 150, 150, 0.7)';
-    ctx.fill();
-    ctx.strokeStyle = isActive ? '#a855f7' : '#999';
-    ctx.lineWidth = 2;
-    ctx.stroke();
-
-    // Center dot
-    if (!isActive) {
+      // Cerchio esterno
+      ctx.strokeStyle = "#666";
+      ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.arc(centerX, centerY, 3, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(200, 200, 200, 0.6)';
+      ctx.arc(centerX, centerY, radius - 5, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Cerchio interno (stick)
+      ctx.fillStyle = "#0099ff";
+      ctx.beginPath();
+      ctx.arc(stickX, stickY, radius / 3, 0, Math.PI * 2);
       ctx.fill();
-    }
-  }, [stickPos, isActive, size]);
+    };
 
-  const handleTouch = (e: React.TouchEvent<HTMLCanvasElement>) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+    const handleMouseDown = (e: MouseEvent) => {
+      setIsDragging(true);
+    };
 
-    const rect = canvas.getBoundingClientRect();
-    const centerX = size / 2;
-    const centerY = size / 2;
-    const maxDistance = size * 0.35;
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isDragging) return;
 
-    for (let i = 0; i < e.touches.length; i++) {
-      const touch = e.touches[i];
-      
-      // Only handle our joystick's touch
-      if (touchIdRef.current !== null && touch.identifier !== touchIdRef.current) {
-        continue;
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+
+      const dx = x - centerX;
+      const dy = y - centerY;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      const maxDistance = radius - 5;
+
+      let stickX = centerX;
+      let stickY = centerY;
+
+      if (distance > maxDistance) {
+        const angle = Math.atan2(dy, dx);
+        stickX = centerX + Math.cos(angle) * maxDistance;
+        stickY = centerY + Math.sin(angle) * maxDistance;
+      } else {
+        stickX = x;
+        stickY = y;
       }
 
-      const touchX = touch.clientX - rect.left;
-      const touchY = touch.clientY - rect.top;
+      drawJoystick(stickX, stickY);
 
-      const deltaX = touchX - centerX;
-      const deltaY = touchY - centerY;
-      const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+      // Calcola input normalizzato
+      const inputX = (stickX - centerX) / maxDistance;
+      const inputY = (stickY - centerY) / maxDistance;
+      onInput(inputX, inputY);
+    };
 
-      // Start tracking this touch
-      if (touchIdRef.current === null) {
-        touchIdRef.current = touch.identifier;
-        setIsActive(true);
-      }
+    const handleMouseUp = () => {
+      setIsDragging(false);
+      drawJoystick(centerX, centerY);
+      onInput(0, 0);
+    };
 
-      if (distance > 0) {
-        // Clamp to max distance
-        const clampedDistance = Math.min(distance, maxDistance);
-        const angle = Math.atan2(deltaY, deltaX);
-        
-        const clampedX = Math.cos(angle) * clampedDistance;
-        const clampedY = Math.sin(angle) * clampedDistance;
+    canvas.addEventListener("mousedown", handleMouseDown);
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
 
-        setStickPos({ x: clampedX, y: clampedY });
+    // Disegna iniziale
+    drawJoystick(centerX, centerY);
 
-        // Normalize to -1 to 1 range
-        const normalizedX = clampedX / maxDistance;
-        const normalizedY = clampedY / maxDistance;
-
-        onMove(normalizedX, normalizedY);
-      }
-    }
-  };
-
-  const handleTouchEnd = (e: React.TouchEvent<HTMLCanvasElement>) => {
-    // Check if our tracked touch ended
-    let ourTouchEnded = true;
-    for (let i = 0; i < e.touches.length; i++) {
-      if (e.touches[i].identifier === touchIdRef.current) {
-        ourTouchEnded = false;
-        break;
-      }
-    }
-
-    if (ourTouchEnded) {
-      touchIdRef.current = null;
-      setIsActive(false);
-      setStickPos({ x: 0, y: 0 });
-      onMove(0, 0);
-    }
-  };
-
-  const positionClass = position === 'right' 
-    ? 'right-8 bottom-32' 
-    : 'left-8 bottom-32';
+    return () => {
+      canvas.removeEventListener("mousedown", handleMouseDown);
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [isDragging, onInput]);
 
   return (
-    <canvas
-      ref={canvasRef}
-      width={size}
-      height={size}
-      onTouchStart={handleTouch}
-      onTouchMove={handleTouch}
-      onTouchEnd={handleTouchEnd}
-      onTouchCancel={handleTouchEnd}
-      className={`fixed ${positionClass} z-50 touch-none select-none`}
-      style={{
-        filter: isActive ? 'drop-shadow(0 0 10px rgba(168, 85, 247, 0.8))' : 'none',
-        transition: 'filter 0.2s'
-      }}
-    />
+    <div ref={containerRef} className="w-32 h-32 bg-gray-900 rounded-full">
+      <canvas
+        ref={canvasRef}
+        width={128}
+        height={128}
+        className="w-full h-full"
+      />
+    </div>
   );
-};
+}

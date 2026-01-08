@@ -1,129 +1,104 @@
-import { useState, useEffect, useCallback } from 'react';
+"use client";
+
+import { useState, useEffect, useCallback } from "react";
 
 export interface GameInput {
-  moveX: number; // -1 (left) to 1 (right)
-  moveY: number; // -1 (up) to 1 (down)
-  usePower: boolean;
-  useGadget: boolean;
+  moveX: number;
+  moveY: number;
+  power: boolean;
+  gadget: boolean;
   pause: boolean;
-  mouseX?: number;
-  mouseY?: number;
-  isMobile: boolean;
 }
 
-export const useGameInput = () => {
-  const [input, setInput] = useState<GameInput>({
-    moveX: 0,
-    moveY: 0,
-    usePower: false,
-    useGadget: false,
-    pause: false,
-    isMobile: false
-  });
+const initialInput: GameInput = {
+  moveX: 0,
+  moveY: 0,
+  power: false,
+  gadget: false,
+  pause: false,
+};
 
-  const [isMobile] = useState(() => {
-    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) 
-      || (window.innerWidth <= 768 && window.matchMedia("(orientation: landscape)").matches);
-  });
+export function useGameInput() {
+  const [input, setInput] = useState<GameInput>(initialInput);
+  const [keys, setKeys] = useState<Record<string, boolean>>({});
 
-  // Keyboard input for desktop
+  // Gestione tastiera PC
   useEffect(() => {
-    if (isMobile) return;
-
-    const keysPressed = new Set<string>();
-
     const handleKeyDown = (e: KeyboardEvent) => {
-      keysPressed.add(e.key.toLowerCase());
-      
-      // Power-up: Space
-      if (e.key === ' ') {
-        setInput(prev => ({ ...prev, usePower: true }));
-        e.preventDefault();
-      }
-      
-      // Gadget: M
-      if (e.key.toLowerCase() === 'm') {
-        setInput(prev => ({ ...prev, useGadget: true }));
-      }
-      
-      // Pause: ESC
-      if (e.key === 'Escape') {
-        setInput(prev => ({ ...prev, pause: !prev.pause }));
-      }
+      const key = e.key.toLowerCase();
+      setKeys((prev) => ({ ...prev, [key]: true }));
+
+      // Controlli speciali
+      if (key === " ") e.preventDefault(); // Spazio per power
+      if (key === "m") e.preventDefault(); // M per gadget
+      if (key === "escape") e.preventDefault(); // ESC per pausa
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
-      keysPressed.delete(e.key.toLowerCase());
-      
-      if (e.key === ' ') {
-        setInput(prev => ({ ...prev, usePower: false }));
-      }
-      if (e.key.toLowerCase() === 'm') {
-        setInput(prev => ({ ...prev, useGadget: false }));
-      }
+      const key = e.key.toLowerCase();
+      setKeys((prev) => ({ ...prev, [key]: false }));
     };
 
-    const updateMovement = () => {
-      let moveX = 0;
-      let moveY = 0;
-
-      // WASD + Arrow keys
-      if (keysPressed.has('a') || keysPressed.has('arrowleft')) moveX = -1;
-      if (keysPressed.has('d') || keysPressed.has('arrowright')) moveX = 1;
-      if (keysPressed.has('w') || keysPressed.has('arrowup')) moveY = -1;
-      if (keysPressed.has('s') || keysPressed.has('arrowdown')) moveY = 1;
-
-      setInput(prev => ({ ...prev, moveX, moveY, isMobile: false }));
-    };
-
-    const interval = setInterval(updateMovement, 16); // ~60fps
-
-    window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('keyup', handleKeyUp);
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
 
     return () => {
-      clearInterval(interval);
-      window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('keyup', handleKeyUp);
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
     };
-  }, [isMobile]);
+  }, []);
 
-  // Mouse tracking for basket ability
+  // Aggiorna input basato sui tasti premuti
   useEffect(() => {
-    if (isMobile) return;
+    let moveX = 0;
+    let moveY = 0;
 
-    const handleMouseMove = (e: MouseEvent) => {
-      setInput(prev => ({ ...prev, mouseX: e.clientX, mouseY: e.clientY }));
-    };
+    // Movimento WASD
+    if (keys["w"] || keys["arrowup"]) moveY = -1;
+    if (keys["s"] || keys["arrowdown"]) moveY = 1;
+    if (keys["a"] || keys["arrowleft"]) moveX = -1;
+    if (keys["d"] || keys["arrowright"]) moveX = 1;
 
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
-  }, [isMobile]);
+    // Controlli speciali
+    const power = keys[" "];
+    const gadget = keys["m"];
+    const pause = keys["escape"];
 
-  // Mobile touch input handlers (to be called from mobile components)
-  const setMobileMove = useCallback((x: number, y: number) => {
-    setInput(prev => ({ ...prev, moveX: x, moveY: y, isMobile: true }));
+    setInput({
+      moveX,
+      moveY,
+      power,
+      gadget,
+      pause,
+    });
+  }, [keys]);
+
+  const setTouchInput = useCallback((x: number, y: number) => {
+    setInput((prev) => ({
+      ...prev,
+      moveX: x,
+      moveY: y,
+    }));
   }, []);
 
-  const setMobilePower = useCallback((active: boolean) => {
-    setInput(prev => ({ ...prev, usePower: active }));
+  const setPowerActive = useCallback((active: boolean) => {
+    setInput((prev) => ({
+      ...prev,
+      power: active,
+    }));
   }, []);
 
-  const setMobileGadget = useCallback((active: boolean) => {
-    setInput(prev => ({ ...prev, useGadget: active }));
-  }, []);
-
-  const setMobilePause = useCallback(() => {
-    setInput(prev => ({ ...prev, pause: !prev.pause }));
+  const setGadgetActive = useCallback((active: boolean) => {
+    setInput((prev) => ({
+      ...prev,
+      gadget: active,
+    }));
   }, []);
 
   return {
     input,
-    isMobile,
-    // Mobile control methods
-    setMobileMove,
-    setMobilePower,
-    setMobileGadget,
-    setMobilePause
+    setTouchInput,
+    setPowerActive,
+    setGadgetActive,
   };
-};
+}
