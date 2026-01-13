@@ -1,15 +1,33 @@
 
 import React, { useState, useEffect } from 'react';
-import Game from './components/Game';
-import MainMenu from './components/MainMenu';
-import GameOver from './components/GameOver';
-import { AuthButton } from './src/components/auth/AuthButton';
-import { Leaderboard, saveLeaderboardScore } from './src/components/ui/Leaderboard';
-import { SettingsModal, useSettings } from './src/components/ui/SettingsModal';
+import Game from '../components/Game';
+import MainMenu from '../components/MainMenu';
+import GameOver from '../components/GameOver';
+import { AuthButton } from './components/auth/AuthButton';
+import { Leaderboard, saveLeaderboardScore } from './components/ui/Leaderboard';
+import SettingsModal from './components/ui/SettingsModal';
 import { useUser } from '@clerk/clerk-react';
 
 import { GameState, PlayerStats, UpgradeType, ConsumableType } from './types';
-import { SKINS, BACKGROUNDS, UPGRADES, CONSUMABLES } from './constants';
+import { SKINS, BACKGROUNDS, UPGRADES, CONSUMABLES } from '../constants';
+
+// Hook locale per gestire le impostazioni visto che è sparito dal file originale
+const useSettings = () => {
+  const [settings, setSettings] = useState(() => {
+    const saved = localStorage.getItem('gameSettings');
+    return saved ? JSON.parse(saved) : {
+      language: 'it',
+      buttonSize: 'medium',
+      buttonPosition: 'bottom-right',
+      volume: 80
+    };
+  });
+  const updateSettings = (newSettings: any) => {
+    setSettings(newSettings);
+    localStorage.setItem('gameSettings', JSON.stringify(newSettings));
+  };
+  return [settings, updateSettings] as const;
+};
 
 const App: React.FC = () => {
   const { user } = useUser();
@@ -26,7 +44,7 @@ const App: React.FC = () => {
   const [stats, setStats] = useState<PlayerStats>(() => {
     const saved = localStorage.getItem('snakecraft_stats_v3');
     const parsed = saved ? JSON.parse(saved) : {};
-    
+
     // Default Fallbacks for new fields
     return {
       points: parsed.points || 0,
@@ -58,24 +76,24 @@ const App: React.FC = () => {
   const handleStartGame = (level: number) => {
     // Consume Items logic
     setStats(prev => {
-        const newInventory = { ...prev.inventory };
-        let changed = false;
+      const newInventory = { ...prev.inventory };
+      let changed = false;
 
-        if ((newInventory[ConsumableType.HEAD_START] || 0) > 0) {
-            newInventory[ConsumableType.HEAD_START]--;
-            changed = true;
-        }
-        if ((newInventory[ConsumableType.SCORE_BOOSTER] || 0) > 0) {
-            newInventory[ConsumableType.SCORE_BOOSTER]--;
-            changed = true;
-        }
+      if ((newInventory[ConsumableType.HEAD_START] || 0) > 0) {
+        newInventory[ConsumableType.HEAD_START]--;
+        changed = true;
+      }
+      if ((newInventory[ConsumableType.SCORE_BOOSTER] || 0) > 0) {
+        newInventory[ConsumableType.SCORE_BOOSTER]--;
+        changed = true;
+      }
 
-        if (changed) {
-            const newState = { ...prev, inventory: newInventory };
-            localStorage.setItem('snakecraft_stats_v3', JSON.stringify(newState));
-            return newState;
-        }
-        return prev;
+      if (changed) {
+        const newState = { ...prev, inventory: newInventory };
+        localStorage.setItem('snakecraft_stats_v3', JSON.stringify(newState));
+        return newState;
+      }
+      return prev;
     });
 
     setCurrentLevel(level);
@@ -97,7 +115,7 @@ const App: React.FC = () => {
 
     setLastScore(score);
     setBossDefeated(victory);
-    
+
     setStats(prev => {
       let newPoints = prev.points + Math.floor(score / 10);
       let newLevelsUnlocked = prev.levelsUnlocked;
@@ -105,14 +123,14 @@ const App: React.FC = () => {
       if (victory) {
         // Always unlock next level when boss is defeated
         newLevelsUnlocked = Math.max(prev.levelsUnlocked, currentLevel + 1);
-        
+
         // Reward every 10 levels: 1000 chocolate
         if (currentLevel % 10 === 0) {
-           newPoints += 1000;
+          newPoints += 1000;
         } else if (currentLevel % 5 === 0) {
-           newPoints += 500; // Bonus for milestone
+          newPoints += 500; // Bonus for milestone
         } else {
-           newPoints += 200; // Standard boss victory bonus
+          newPoints += 200; // Standard boss victory bonus
         }
       }
 
@@ -123,17 +141,17 @@ const App: React.FC = () => {
         levelsUnlocked: newLevelsUnlocked,
         bossesDefeated: victory ? prev.bossesDefeated + 1 : prev.bossesDefeated
       };
-      
+
       localStorage.setItem('snakecraft_stats_v3', JSON.stringify(newState));
-      
+
       // Save to leaderboard if user is logged in
       if (user && score > 0) {
         saveLeaderboardScore(score, currentLevel, user);
       }
-      
+
       return newState;
     });
-    
+
     setGameState(GameState.GAME_OVER);
   };
 
@@ -211,8 +229,8 @@ const App: React.FC = () => {
       <AuthButton />
 
       {gameState === GameState.MENU && (
-        <MainMenu 
-          stats={stats} 
+        <MainMenu
+          stats={stats}
           onStart={handleStartGame}
           onTutorial={handleStartTutorial}
           onBuySkin={buySkin}
@@ -225,9 +243,9 @@ const App: React.FC = () => {
           onShowSettings={() => setShowSettings(true)}
         />
       )}
-      
+
       {gameState === GameState.PLAYING && (
-        <Game 
+        <Game
           level={currentLevel}
           currentSkin={stats.currentSkin}
           currentBg={stats.currentBackground}
@@ -248,8 +266,8 @@ const App: React.FC = () => {
       )}
 
       {gameState === GameState.GAME_OVER && (
-        <GameOver 
-          score={lastScore} 
+        <GameOver
+          score={lastScore}
           bossDefeated={bossDefeated}
           onRestart={() => setGameState(GameState.PLAYING)}
           onHome={() => setGameState(GameState.MENU)}
