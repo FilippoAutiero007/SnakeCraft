@@ -1,104 +1,81 @@
-"use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useRef, useEffect, useCallback } from 'react';
+import { Direction } from '../types';
 
-export interface GameInput {
-  moveX: number;
-  moveY: number;
-  power: boolean;
-  gadget: boolean;
-  pause: boolean;
-}
+export const useGameInput = (
+  isPaused: boolean,
+  onPause: () => void,
+  onResume: () => void,
+  onAbility: () => void,
+  onExit: () => void
+) => {
+  const directionRef = useRef<Direction>(Direction.RIGHT);
+  const inputQueueRef = useRef<Direction[]>([]);
+  const hasStartedRef = useRef(false);
 
-const initialInput: GameInput = {
-  moveX: 0,
-  moveY: 0,
-  power: false,
-  gadget: false,
-  pause: false,
-};
+  const isOpposite = (d1: Direction, d2: Direction) => {
+    return (d1 === Direction.UP && d2 === Direction.DOWN) ||
+           (d1 === Direction.DOWN && d2 === Direction.UP) ||
+           (d1 === Direction.LEFT && d2 === Direction.RIGHT) ||
+           (d1 === Direction.RIGHT && d2 === Direction.LEFT);
+  };
 
-export function useGameInput() {
-  const [input, setInput] = useState<GameInput>(initialInput);
-  const [keys, setKeys] = useState<Record<string, boolean>>({});
+  const registerDirection = useCallback((newDir: Direction) => {
+      const lastIntended = inputQueueRef.current.length > 0 
+        ? inputQueueRef.current[inputQueueRef.current.length - 1] 
+        : directionRef.current;
+      
+      // Only register if it's different and not opposite
+      if (newDir !== lastIntended && !isOpposite(newDir, lastIntended)) {
+          // Limit queue to 2 to prevent laggy feel on spam
+          if (inputQueueRef.current.length < 2) { 
+              inputQueueRef.current.push(newDir);
+              if (!hasStartedRef.current) hasStartedRef.current = true;
+          }
+      }
+  }, []);
 
-  // Gestione tastiera PC
+  const pollInputs = useCallback(() => {
+     // Intentionally empty - Logic moved to event handlers for tighter response
+  }, []);
+
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      const key = e.key.toLowerCase();
-      setKeys((prev) => ({ ...prev, [key]: true }));
+    const handleKey = (e: KeyboardEvent) => {
+      if (!hasStartedRef.current && (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','w','a','s','d'].includes(e.key))) {
+         hasStartedRef.current = true;
+      }
 
-      // Controlli speciali
-      if (key === " ") e.preventDefault(); // Spazio per power
-      if (key === "m") e.preventDefault(); // M per gadget
-      if (key === "escape") e.preventDefault(); // ESC per pausa
+      if (e.key === 'Escape') {
+         if (isPaused) onExit();
+         else onPause();
+      }
+      
+      if (e.key === ' ') {
+         if (isPaused) onResume();
+         else onAbility();
+      }
+
+      let newDir: Direction | null = null;
+      if (e.key === 'ArrowUp' || e.key === 'w') newDir = Direction.UP;
+      if (e.key === 'ArrowDown' || e.key === 's') newDir = Direction.DOWN;
+      if (e.key === 'ArrowLeft' || e.key === 'a') newDir = Direction.LEFT;
+      if (e.key === 'ArrowRight' || e.key === 'd') newDir = Direction.RIGHT;
+
+      if (newDir) {
+          registerDirection(newDir);
+      }
     };
 
-    const handleKeyUp = (e: KeyboardEvent) => {
-      const key = e.key.toLowerCase();
-      setKeys((prev) => ({ ...prev, [key]: false }));
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    window.addEventListener("keyup", handleKeyUp);
-
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-      window.removeEventListener("keyup", handleKeyUp);
-    };
-  }, []);
-
-  // Aggiorna input basato sui tasti premuti
-  useEffect(() => {
-    let moveX = 0;
-    let moveY = 0;
-
-    // Movimento WASD
-    if (keys["w"] || keys["arrowup"]) moveY = -1;
-    if (keys["s"] || keys["arrowdown"]) moveY = 1;
-    if (keys["a"] || keys["arrowleft"]) moveX = -1;
-    if (keys["d"] || keys["arrowright"]) moveX = 1;
-
-    // Controlli speciali
-    const power = keys[" "];
-    const gadget = keys["m"];
-    const pause = keys["escape"];
-
-    setInput({
-      moveX,
-      moveY,
-      power,
-      gadget,
-      pause,
-    });
-  }, [keys]);
-
-  const setTouchInput = useCallback((x: number, y: number) => {
-    setInput((prev) => ({
-      ...prev,
-      moveX: x,
-      moveY: y,
-    }));
-  }, []);
-
-  const setPowerActive = useCallback((active: boolean) => {
-    setInput((prev) => ({
-      ...prev,
-      power: active,
-    }));
-  }, []);
-
-  const setGadgetActive = useCallback((active: boolean) => {
-    setInput((prev) => ({
-      ...prev,
-      gadget: active,
-    }));
-  }, []);
+    window.addEventListener('keydown', handleKey);
+    return () => { window.removeEventListener('keydown', handleKey); };
+  }, [isPaused, onPause, onResume, onExit, onAbility, registerDirection]);
 
   return {
-    input,
-    setTouchInput,
-    setPowerActive,
-    setGadgetActive,
+    directionRef,
+    inputQueueRef,
+    hasStartedRef,
+    pollInputs,
+    isOpposite,
+    registerDirection
   };
-}
+};

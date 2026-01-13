@@ -1,15 +1,15 @@
 
 import React, { useState, useEffect } from 'react';
-import Game from '../components/Game';
-import MainMenu from '../components/MainMenu';
-import GameOver from '../components/GameOver';
+import Game from './components/game/Game';
+import MainMenu from './components/game/MainMenu';
+import GameOver from './components/game/GameOver';
 import { AuthButton } from './components/auth/AuthButton';
 import { Leaderboard, saveLeaderboardScore } from './components/ui/Leaderboard';
 import SettingsModal from './components/ui/SettingsModal';
 import { useUser } from '@clerk/clerk-react';
 
 import { GameState, PlayerStats, UpgradeType, ConsumableType } from './types';
-import { SKINS, BACKGROUNDS, UPGRADES, CONSUMABLES } from '../constants';
+import { SKINS, BACKGROUNDS, UPGRADES, CONSUMABLES } from './constants';
 
 // Hook locale per gestire le impostazioni visto che è sparito dal file originale
 const useSettings = () => {

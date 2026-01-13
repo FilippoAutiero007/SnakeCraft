@@ -2,7 +2,7 @@
 import React from 'react';
 import { Heart } from 'lucide-react';
 import { ChocolateIcon } from '../Icons';
-import { INITIAL_HEALTH } from '../../constants';
+import { INITIAL_HEALTH } from '../../../constants';
 
 interface HUDProps {
     score: number;
