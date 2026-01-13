@@ -1,17 +1,17 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Button } from "./button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./dialog";
-import { Slider } from "./slider";
-import { Label } from "./label";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Slider } from "@/components/ui/slider";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "./select";
+} from "@/components/ui/select";
 
 interface Settings {
   language: "it" | "en";

@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Heart } from 'lucide-react';
-import { ChocolateIcon } from '../Icons';
+import { ChocolateIcon } from '../GameIcons';
 import { INITIAL_HEALTH } from '../../../constants';
 
 interface HUDProps {

@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { RotateCcw, Home } from 'lucide-react';
-import { ChocolateIcon } from './Icons';
+import { ChocolateIcon } from './GameIcons';
 
 interface GameOverProps {
   score: number;

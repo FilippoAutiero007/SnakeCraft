@@ -5,7 +5,7 @@ import { getLevelConfig } from '../../constants';
 import { Play, ShoppingBag, ArrowLeft, Crown, BookOpen, Settings } from 'lucide-react';
 import { audio } from '../../utils/audio';
 import { Shop } from './Shop';
-import { ChocolateIcon } from './Icons';
+import { ChocolateIcon } from './GameIcons';
 
 interface MainMenuProps {
   stats: PlayerStats;

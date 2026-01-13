@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { PlayerStats, UpgradeType, ConsumableType } from '../../types';
 import { SKINS, BACKGROUNDS, UPGRADES, CONSUMABLES } from '../../constants';
 import { ArrowLeft, Magnet, Shield, Target, Clock, Gift, Star } from 'lucide-react';
-import { ChocolateIcon } from './Icons';
+import { ChocolateIcon } from './GameIcons';
 
 interface ShopProps {
   stats: PlayerStats;

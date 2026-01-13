@@ -4,30 +4,13 @@ import Game from './components/game/Game';
 import MainMenu from './components/game/MainMenu';
 import GameOver from './components/game/GameOver';
 import { AuthButton } from './components/auth/AuthButton';
-import { Leaderboard, saveLeaderboardScore } from './components/ui/Leaderboard';
-import SettingsModal from './components/ui/SettingsModal';
+import { Leaderboard, saveLeaderboardScore } from './components/game/modals/Leaderboard';
+import SettingsModal from './components/game/modals/SettingsModal';
 import { useUser } from '@clerk/clerk-react';
+import { useSettings } from './hooks/useSettings';
 
 import { GameState, PlayerStats, UpgradeType, ConsumableType } from './types';
 import { SKINS, BACKGROUNDS, UPGRADES, CONSUMABLES } from './constants';
-
-// Hook locale per gestire le impostazioni visto che è sparito dal file originale
-const useSettings = () => {
-  const [settings, setSettings] = useState(() => {
-    const saved = localStorage.getItem('gameSettings');
-    return saved ? JSON.parse(saved) : {
-      language: 'it',
-      buttonSize: 'medium',
-      buttonPosition: 'bottom-right',
-      volume: 80
-    };
-  });
-  const updateSettings = (newSettings: any) => {
-    setSettings(newSettings);
-    localStorage.setItem('gameSettings', JSON.stringify(newSettings));
-  };
-  return [settings, updateSettings] as const;
-};
 
 const App: React.FC = () => {
   const { user } = useUser();
