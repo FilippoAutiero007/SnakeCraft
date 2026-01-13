@@ -2,7 +2,6 @@ import { ClerkProvider } from "@clerk/clerk-react";
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
-import './index.css';
 
 const PUBLISHABLE_KEY = "pk_test_ZmFpci1ndXBweS04Ny5jbGVyay5hY2NvdW50cy5kZXYk";
 
