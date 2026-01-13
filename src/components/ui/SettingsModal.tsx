@@ -13,11 +13,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-interface SettingsModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-}
-
 interface Settings {
   language: "it" | "en";
   buttonSize: "small" | "medium" | "large";
@@ -25,13 +20,27 @@ interface Settings {
   volume: number;
 }
 
-export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
-  const [settings, setSettings] = useState<Settings>({
+interface SettingsModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSave?: (settings: Settings) => void;
+  currentSettings?: Settings;
+}
+
+export default function SettingsModal({ isOpen, onClose, onSave, currentSettings }: SettingsModalProps) {
+  const [settings, setSettings] = useState<Settings>(currentSettings || {
     language: "it",
     buttonSize: "medium",
     buttonPosition: "bottom-right",
     volume: 80,
   });
+
+  // Aggiorna lo stato se le props cambiano
+  useEffect(() => {
+    if (currentSettings) {
+      setSettings(currentSettings);
+    }
+  }, [currentSettings]);
 
   // Carica impostazioni da localStorage
   useEffect(() => {
@@ -43,6 +52,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
   const handleSave = () => {
     localStorage.setItem("gameSettings", JSON.stringify(settings));
+    if (onSave) onSave(settings);
     onClose();
   };
 
