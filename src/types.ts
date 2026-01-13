@@ -6,8 +6,7 @@ export enum GameState {
   GAME_OVER = 'GAME_OVER',
   SHOP = 'SHOP',
   LEVEL_SELECT = 'LEVEL_SELECT',
-  LEADERBOARD = 'LEADERBOARD',
-  AI_STUDIO = 'AI_STUDIO'
+  LEADERBOARD = 'LEADERBOARD'
 }
 
 export enum Direction {
@@ -45,7 +44,7 @@ export enum PowerUpType {
   TIME_FREEZE = 'TIME_FREEZE', // Slow enemies
   SPEED_BOOST = 'SPEED_BOOST', // Fast move
   HEAL = 'HEAL', // Instant Heal
-  
+
   // New
   ECHO_BOMB = 'ECHO_BOMB', // Area damage pulses
   FURY_CLAWS = 'FURY_CLAWS', // 3x3 Block Break
@@ -78,7 +77,7 @@ export interface PlayerStats {
   highScore: number;
   levelsUnlocked: number;
   bossesDefeated: number;
-  
+
   // Cosmetics
   ownedSkins: string[];
   currentSkin: string;
