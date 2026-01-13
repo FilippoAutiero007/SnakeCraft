@@ -67,7 +67,7 @@ export type AIChatBoxProps = {
  * - Markdown rendering with Streamdown
  * - Auto-scrolls to latest message
  * - Loading states
- * - Uses global theme colors from index.css
+ * - Uses global theme colors
  *
  * @example
  * ```tsx

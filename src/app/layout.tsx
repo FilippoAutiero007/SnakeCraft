@@ -1,6 +1,5 @@
 import { ClerkProvider, SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs";
 import type { Metadata } from "next";
-import "../index.css";
 
 export const metadata: Metadata = {
   title: "SnakeCraft",

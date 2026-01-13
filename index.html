@@ -1,83 +1,120 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>SnakeCraft Moderno</title>
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
-    <script>
-      // Suppress the Tailwind CSS production warning to keep console clean
-      (function() {
-        var originalWarn = console.warn;
-        console.warn = function() {
-          if (arguments.length > 0 && typeof arguments[0] === 'string' && arguments[0].indexOf('cdn.tailwindcss.com') !== -1) {
-            return;
-          }
-          originalWarn.apply(console, arguments);
-        };
-      })();
-    </script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-      body {
-        font-family: 'Roboto', sans-serif;
-        background-color: #1a1a1a;
-        overflow: hidden;
-        touch-action: none;
-      }
-      
-      .pixel-font {
-        font-family: 'Press Start 2P', cursive;
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>SnakeCraft Moderno</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Roboto:wght@400;700&display=swap"
+    rel="stylesheet">
+  <script>
+    // Suppress the Tailwind CSS production warning to keep console clean
+    (function () {
+      var originalWarn = console.warn;
+      console.warn = function () {
+        if (arguments.length > 0 && typeof arguments[0] === 'string' && arguments[0].indexOf('cdn.tailwindcss.com') !== -1) {
+          return;
+        }
+        originalWarn.apply(console, arguments);
+      };
+    })();
+  </script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      font-family: 'Roboto', sans-serif;
+      background-color: #1a1a1a;
+      overflow: hidden;
+      touch-action: none;
+    }
+
+    .pixel-font {
+      font-family: 'Press Start 2P', cursive;
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #2d2d2d;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #555;
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #777;
+    }
+
+    .game-grid {
+      display: grid;
+      /* Dynamic columns/rows handled in inline styles */
+    }
+
+    /* Smooth movement animations */
+    .entity-transition {
+      transition: all 0.15s linear;
+    }
+
+    @keyframes shake {
+      0% {
+        transform: translate(1px, 1px) rotate(0deg);
       }
 
-      /* Custom Scrollbar */
-      ::-webkit-scrollbar {
-        width: 8px;
-      }
-      ::-webkit-scrollbar-track {
-        background: #2d2d2d;
-      }
-      ::-webkit-scrollbar-thumb {
-        background: #555;
-        border-radius: 4px;
-      }
-      ::-webkit-scrollbar-thumb:hover {
-        background: #777;
+      10% {
+        transform: translate(-1px, -2px) rotate(-1deg);
       }
 
-      .game-grid {
-        display: grid;
-        /* Dynamic columns/rows handled in inline styles */
-      }
-      
-      /* Smooth movement animations */
-      .entity-transition {
-        transition: all 0.15s linear;
+      20% {
+        transform: translate(-3px, 0px) rotate(1deg);
       }
 
-      @keyframes shake {
-        0% { transform: translate(1px, 1px) rotate(0deg); }
-        10% { transform: translate(-1px, -2px) rotate(-1deg); }
-        20% { transform: translate(-3px, 0px) rotate(1deg); }
-        30% { transform: translate(3px, 2px) rotate(0deg); }
-        40% { transform: translate(1px, -1px) rotate(1deg); }
-        50% { transform: translate(-1px, 2px) rotate(-1deg); }
-        60% { transform: translate(-3px, 1px) rotate(0deg); }
-        70% { transform: translate(3px, 1px) rotate(-1deg); }
-        80% { transform: translate(-1px, -1px) rotate(1deg); }
-        90% { transform: translate(1px, 2px) rotate(0deg); }
-        100% { transform: translate(1px, -2px) rotate(-1deg); }
+      30% {
+        transform: translate(3px, 2px) rotate(0deg);
       }
 
-      .shake {
-        animation: shake 0.5s;
-        animation-iteration-count: 1;
+      40% {
+        transform: translate(1px, -1px) rotate(1deg);
       }
 
-      .laser-beam {
-        box-shadow: 0 0 10px #ef4444, 0 0 20px #ef4444;
+      50% {
+        transform: translate(-1px, 2px) rotate(-1deg);
       }
-    </style>
+
+      60% {
+        transform: translate(-3px, 1px) rotate(0deg);
+      }
+
+      70% {
+        transform: translate(3px, 1px) rotate(-1deg);
+      }
+
+      80% {
+        transform: translate(-1px, -1px) rotate(1deg);
+      }
+
+      90% {
+        transform: translate(1px, 2px) rotate(0deg);
+      }
+
+      100% {
+        transform: translate(1px, -2px) rotate(-1deg);
+      }
+    }
+
+    .shake {
+      animation: shake 0.5s;
+      animation-iteration-count: 1;
+    }
+
+    .laser-beam {
+      box-shadow: 0 0 10px #ef4444, 0 0 20px #ef4444;
+    }
+  </style>
   <script type="importmap">
 {
   "imports": {
@@ -89,10 +126,12 @@
   }
 }
 </script>
-<link rel="stylesheet" href="/index.css">
+
 </head>
-  <body class="text-white h-screen w-full flex flex-col overflow-hidden">
-    <div id="root" class="h-full w-full"></div>
-    <script type="module" src="/src/main.tsx"></script>
+
+<body class="text-white h-screen w-full flex flex-col overflow-hidden">
+  <div id="root" class="h-full w-full"></div>
+  <script type="module" src="/src/main.tsx"></script>
 </body>
+
 </html>
