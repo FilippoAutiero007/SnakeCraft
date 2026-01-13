@@ -1,4 +1,4 @@
-# TODO LIST - SNAKECRAFT MODERNO
+# TODO - SnakeCraft (Last Update: 2026-01-13)
 
 ## 🔴 PRIORITÀ ALTA (CRITICO / BUG POTENZIALI)
 
