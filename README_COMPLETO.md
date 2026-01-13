@@ -2,7 +2,7 @@
 
 ## 🎮 Panoramica
 
-**SnakeCraft** è un gioco Snake moderno e completo con grafica 2.5D, sistema di chunk infiniti, biomi dinamici, boss progressivi e un sistema di progressione RPG completo. Il gioco è ottimizzato per funzionare a **60 FPS** con movimento fluido e supporta sia desktop che mobile.
+**SnakeCraft** è un gioco Snake  con grafica 2.5D, sistema di chunk infiniti, biomi dinamici, boss progressivi e un sistema di progressione RPG completo. Il gioco è ottimizzato per funzionare a **60 FPS** con movimento fluido e supporta sia desktop che mobile.
 
 ---
 
@@ -163,7 +163,7 @@ snakecraft/
 ## 🎨 Asset Grafici
 
 Tutti gli asset sono stati generati con intelligenza artificiale e sono inclusi nella cartella `assets/`:
-- 5 boss unici (GOLEM, PHOENIX, CYBER_WORM, PUMPKIN_KING, SHADOW)
+- boss unici (GOLEM, PHOENIX, CYBER_WORM, PUMPKIN_KING, SHADOW)
 - 3 power-up riconoscibili (LASER, SHIELD, SPEED)
 - Blocchi cioccolata e monete d'oro
 - Stile pixel art coerente
@@ -202,8 +202,8 @@ Tutti gli asset sono stati generati con intelligenza artificiale e sono inclusi 
 
 ## 🐛 Correzioni Implementate
 
-✅ Rimosso pulsante AI Studio  
-✅ Tutorial funzionante  
+
+  Tutorial funzionante  
 ✅ Boss con comportamento corretto  
 ✅ Negozio accessibile in pausa  
 ✅ Power-up riconoscibili  
