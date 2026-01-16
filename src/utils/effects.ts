@@ -157,45 +157,63 @@ export function createTrailEffect(
 }
 
 /**
- * Creates an explosion effect using particle system
- * @param particleSystem The particle system to add particles to
+ * Creates an explosion effect by adding particles to an array
  * @param x X position of explosion
  * @param y Y position of explosion
  * @param color Color of explosion particles
  * @param count Number of particles
+ * @param particlesArray Array to add particles to
  * @param speed Speed of particles
  */
 export function createExplosion(
-  particleSystem: ParticleSystem,
   x: number,
   y: number,
   color: string = '#ff6600',
   count: number = 20,
-  speed: number = 3
+  particlesArray: Particle[] = [],
+  speed: number = 2
 ): void {
-  particleSystem.addBurst(x, y, count, color, speed);
+  for (let i = 0; i < count; i++) {
+    const angle = (Math.PI * 2 * i) / count;
+    const vx = Math.cos(angle) * speed;
+    const vy = Math.sin(angle) * speed;
+    particlesArray.push({
+      x,
+      y,
+      vx,
+      vy,
+      life: 30,
+      maxLife: 30,
+      color,
+      size: 2,
+    });
+  }
 }
 
 /**
  * Triggers haptic feedback on mobile devices
- * @param intensity Intensity of the haptic feedback ('light', 'medium', 'heavy')
+ * @param intensity Intensity of the haptic feedback (string: 'light', 'medium', 'heavy' or number in ms)
  */
-export function triggerHaptic(intensity: 'light' | 'medium' | 'heavy' = 'medium'): void {
+export function triggerHaptic(intensity: 'light' | 'medium' | 'heavy' | number = 'medium'): void {
   // Check if vibration API is available
   if ('vibrate' in navigator) {
     let duration: number;
     
-    switch (intensity) {
-      case 'light':
-        duration = 10;
-        break;
-      case 'heavy':
-        duration = 50;
-        break;
-      case 'medium':
-      default:
-        duration = 25;
-        break;
+    if (typeof intensity === 'number') {
+      duration = intensity;
+    } else {
+      switch (intensity) {
+        case 'light':
+          duration = 10;
+          break;
+        case 'heavy':
+          duration = 50;
+          break;
+        case 'medium':
+        default:
+          duration = 25;
+          break;
+      }
     }
     
     navigator.vibrate(duration);
@@ -203,10 +221,21 @@ export function triggerHaptic(intensity: 'light' | 'medium' | 'heavy' = 'medium'
 }
 
 /**
- * Updates particles in the particle system
- * @param particleSystem The particle system to update
+ * Updates particles in an array (removes dead particles and updates positions)
+ * @param particlesArray The particles array to update
  */
-export function updateParticles(particleSystem: ParticleSystem): void {
-  particleSystem.update();
+export function updateParticles(particlesArray: Particle[]): void {
+  for (let i = particlesArray.length - 1; i >= 0; i--) {
+    const p = particlesArray[i];
+    p.x += p.vx;
+    p.y += p.vy;
+    p.vy += 0.1; // Gravity
+    p.life--;
+    
+    // Remove dead particles
+    if (p.life <= 0) {
+      particlesArray.splice(i, 1);
+    }
+  }
 }
 
