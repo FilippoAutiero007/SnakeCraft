@@ -2,9 +2,9 @@
 import React, { memo } from 'react';
 import { PowerUpType, Direction } from '../../types';
 import { Pause, Volume2, VolumeX, ShoppingBag } from 'lucide-react';
-import { HUD } from './ui/HUD';
-import { TouchControls } from './ui/TouchControls';
-import { TutorialOverlay } from './ui/TutorialOverlay';
+import { HUD } from './hud/HUD';
+import { TouchControls } from './hud/TouchControls';
+import { TutorialOverlay } from './hud/TutorialOverlay';
 import { Zap, Shield, Eye, Clock, Heart, FastForward, Star } from 'lucide-react';
 
 interface GameUIProps {

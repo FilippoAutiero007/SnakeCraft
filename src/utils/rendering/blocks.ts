@@ -3,7 +3,7 @@ import { BlockType, BiomeType } from '../../types';
 import { BLOCK_COLORS } from '../../constants';
 import { getBiome } from '../logic';
 import { drawHedge } from './assets';
-import { drawOptimizedRock } from '../../src/graphics/rock-renderer';
+import { drawOptimizedRock } from '../../graphics/rock-renderer';
 
 // Asset Caching for Gold and Chocolate
 const assetCache = new Map<string, HTMLCanvasElement>();

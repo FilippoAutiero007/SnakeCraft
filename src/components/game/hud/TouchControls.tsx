@@ -2,7 +2,7 @@
 import React from 'react';
 import { ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Eye, Zap } from 'lucide-react';
 import { Direction, PowerUpType } from '../../../types';
-import { audio } from '../../utils/audio';
+import { audio } from '../../../utils/audio';
 
 interface TouchControlsProps {
     onInput: (dir: Direction) => void;

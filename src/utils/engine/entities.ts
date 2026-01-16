@@ -3,7 +3,7 @@ import { Boss, Projectile, AoEZone, SnakeSegment, BlockType, Direction } from '.
 import { getLevelConfig, BLOCK_COLORS } from '../../constants';
 import { generateBlock } from '../logic';
 import { createExplosion } from '../effects';
-import { getSmartMove } from '../../src/ai/pathfinding';
+import { getSmartMove } from '../../ai/pathfinding';
 
 type SoundPlayer = (name: 'MOVE' | 'BREAK' | 'EAT' | 'DAMAGE' | 'POWERUP' | 'BOSS_HIT' | 'LASER') => void;
 

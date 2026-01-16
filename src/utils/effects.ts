@@ -155,3 +155,58 @@ export function createTrailEffect(
 
   ctx.stroke();
 }
+
+/**
+ * Creates an explosion effect using particle system
+ * @param particleSystem The particle system to add particles to
+ * @param x X position of explosion
+ * @param y Y position of explosion
+ * @param color Color of explosion particles
+ * @param count Number of particles
+ * @param speed Speed of particles
+ */
+export function createExplosion(
+  particleSystem: ParticleSystem,
+  x: number,
+  y: number,
+  color: string = '#ff6600',
+  count: number = 20,
+  speed: number = 3
+): void {
+  particleSystem.addBurst(x, y, count, color, speed);
+}
+
+/**
+ * Triggers haptic feedback on mobile devices
+ * @param intensity Intensity of the haptic feedback ('light', 'medium', 'heavy')
+ */
+export function triggerHaptic(intensity: 'light' | 'medium' | 'heavy' = 'medium'): void {
+  // Check if vibration API is available
+  if ('vibrate' in navigator) {
+    let duration: number;
+    
+    switch (intensity) {
+      case 'light':
+        duration = 10;
+        break;
+      case 'heavy':
+        duration = 50;
+        break;
+      case 'medium':
+      default:
+        duration = 25;
+        break;
+    }
+    
+    navigator.vibrate(duration);
+  }
+}
+
+/**
+ * Updates particles in the particle system
+ * @param particleSystem The particle system to update
+ */
+export function updateParticles(particleSystem: ParticleSystem): void {
+  particleSystem.update();
+}
+
