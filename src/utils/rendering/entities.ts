@@ -127,7 +127,7 @@ export const drawAoE = (ctx: CanvasRenderingContext2D, zone: AoEZone, s: number)
 export const drawParticles = (ctx: CanvasRenderingContext2D, particles: Particle[], s: number) => {
     particles.forEach(p => {
         ctx.fillStyle = p.color;
-        ctx.globalAlpha = p.life;
+        ctx.globalAlpha = p.life / p.maxLife; // Normalize to 0-1 range
         const size = p.size * s;
         ctx.fillRect(p.x * s - size/2, p.y * s - size/2, size, size);
     });
