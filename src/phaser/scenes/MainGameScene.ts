@@ -2,7 +2,7 @@
 import Phaser from 'phaser';
 import { Snake } from '../entities/Snake';
 import { WorldManager } from '../entities/WorldManager';
-import { Direction, BlockType } from '../../types';
+import { Direction, BlockType, PowerUpType } from '../../types';
 import { CELL_SIZE_PX } from '../../constants';
 
 export class MainGameScene extends Phaser.Scene {
@@ -15,6 +15,7 @@ export class MainGameScene extends Phaser.Scene {
     private moveInterval: number = 100; // ms
     private score: number = 0;
     private isGameOver: boolean = false;
+    private spawnTimer: number = 0;
 
     constructor() {
         super({ key: 'MainGameScene' });
@@ -63,6 +64,14 @@ export class MainGameScene extends Phaser.Scene {
             this.lastMoveTime = time;
             this.tick();
         }
+
+        // Spawn items check every approx 1s
+        this.spawnTimer += delta;
+        if (this.spawnTimer > 1000) {
+            const head = this.snake.getHead();
+            this.worldManager.spawnItemNearPlayer(head.x, head.y);
+            this.spawnTimer = 0;
+        }
     }
 
     private tick() {
@@ -92,6 +101,9 @@ export class MainGameScene extends Phaser.Scene {
             grow = true;
             this.game.events.emit('scoreUpdate', this.score);
             this.worldManager.removeBlock(next.x, next.y);
+        } else if (block === BlockType.POWERUP_BOX) {
+            this.handlePowerUp();
+            this.worldManager.removeBlock(next.x, next.y);
         }
 
         this.snake.move(grow);
@@ -102,6 +114,25 @@ export class MainGameScene extends Phaser.Scene {
         const px = head.x * CELL_SIZE_PX + CELL_SIZE_PX / 2;
         const py = head.y * CELL_SIZE_PX + CELL_SIZE_PX / 2;
         this.cameras.main.centerOn(px, py);
+    }
+
+    private handlePowerUp() {
+        const types = [PowerUpType.SPEED_BOOST, PowerUpType.GHOST_SHIELD, PowerUpType.LASER_EYES];
+        const random = types[Math.floor(Math.random() * types.length)];
+
+        // Notify React UI
+        this.game.events.emit('uiUpdate', { powerUp: random, powerUpTime: 600 });
+
+        // TODO: Apply effect logic here (e.g. speed boost reduces moveInterval)
+        if (random === PowerUpType.SPEED_BOOST) {
+            this.moveInterval = 50;
+            // Reset after time? Handled by a timer or React tells us?
+            // Usually game logic should handle it.
+            this.time.delayedCall(10000, () => {
+                this.moveInterval = 100;
+                this.game.events.emit('uiUpdate', { powerUp: PowerUpType.NONE, powerUpTime: 0 });
+            });
+        }
     }
 
     private handleGameOver() {

@@ -1,7 +1,7 @@
 
 import Phaser from 'phaser';
 import { BlockType } from '../../types';
-import { generateBlock, getChunkCoords, getChunkKey } from '../../utils/logic';
+import { generateBlock, getChunkCoords, getChunkKey, getBiome, getItemToSpawn } from '../../utils/logic';
 import { CELL_SIZE_PX, BLOCK_COLORS, VIEWPORT_WIDTH_CELLS, CHUNK_SIZE } from '../../constants';
 
 export class WorldManager {
@@ -40,7 +40,32 @@ export class WorldManager {
             }
         });
 
-        // TODO: Unload far chunks logic could go here
+        // Dynamic Spawning Logic
+        // We can check item count or just spawn periodically managed by Scene
+        // But WorldManager manages the map, so it should place items.
+    }
+
+    public spawnItemNearPlayer(px: number, py: number) {
+        // Try 10 times to find a spot
+        for (let i = 0; i < 10; i++) {
+            const range = 8;
+            const rx = px + Math.floor(Math.random() * range * 2) - range;
+            const ry = py + Math.floor(Math.random() * range * 2) - range;
+
+            // Ensure not too close
+            if (Math.abs(rx - px) < 2 && Math.abs(ry - py) < 2) continue;
+
+            const existing = this.getBlock(rx, ry);
+            if (existing === BlockType.EMPTY) {
+                // Determine what to spawn
+                const biome = getBiome(rx, ry, false); // Tutorial check needed?
+                const item = getItemToSpawn(this.currentLevel, biome);
+
+                this.map.set(`${rx},${ry}`, item);
+                this.renderBlock(rx, ry, item);
+                return;
+            }
+        }
     }
 
     private loadChunk(key: string) {
