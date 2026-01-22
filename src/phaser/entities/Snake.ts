@@ -8,11 +8,10 @@ export class Snake {
     private body: SnakeSegment[];
     private direction: Direction;
     private nextDirection: Direction;
-    private moveTimer: number = 0;
-    private moveInterval: number = 100; // ms per move (speed)
     private group: Phaser.GameObjects.Group;
     private headColor: number;
     private bodyColor: number;
+    private growing: boolean = false;
 
     constructor(scene: Phaser.Scene, x: number, y: number, initialLength: number, skinId: string) {
         this.scene = scene;
@@ -28,7 +27,7 @@ export class Snake {
         // Colors
         const skin = SKINS.find(s => s.id === skinId) || SKINS[0];
         const colorInt = parseInt(skin.color.replace('#', '0x'), 16);
-        this.headColor = 0xffffff; // White head usually or lighter
+        this.headColor = 0xffffff;
         this.bodyColor = colorInt;
 
         // Create Group for rendering
@@ -46,41 +45,46 @@ export class Snake {
         this.nextDirection = dir;
     }
 
-    public update(time: number, delta: number): boolean {
-        this.moveTimer += delta;
-        if (this.moveTimer >= this.moveInterval) {
-            this.moveTimer -= this.moveInterval;
-            this.move();
-            return true; // Moved this frame
+    public previewMove(): Coordinate {
+        const head = this.body[0];
+        const next = { ...head };
+
+        switch (this.nextDirection) {
+            case Direction.UP: next.y--; break;
+            case Direction.DOWN: next.y++; break;
+            case Direction.LEFT: next.x--; break;
+            case Direction.RIGHT: next.x++; break;
         }
-        return false;
+        return next;
     }
 
-    private move() {
+    public move(grow: boolean = false) {
         this.direction = this.nextDirection;
-
-        const head = { ...this.body[0] };
-
-        switch (this.direction) {
-            case Direction.UP: head.y--; break;
-            case Direction.DOWN: head.y++; break;
-            case Direction.LEFT: head.x--; break;
-            case Direction.RIGHT: head.x++; break;
-        }
+        const head = this.previewMove();
 
         // Update isHead
-        head.isHead = true;
         this.body[0].isHead = false;
 
-        // Move body
-        this.body.unshift(head);
-        this.body.pop();
+        // Add new head
+        this.body.unshift({ ...head, isHead: true });
+
+        // Remove tail unless growing
+        if (!grow) {
+            this.body.pop();
+        }
 
         this.render();
     }
 
-    // TODO: Separate Logic from Render for smooth interpolation
-    // Currently snapping to grid for simplicity of first pass
+    public isOccupying(x: number, y: number): boolean {
+        // Ignore tail (last segment) because it will move away (unless growing, but usually collision happens before grow)
+        // If we want strict check:
+        for (let i = 0; i < this.body.length - 1; i++) {
+            if (this.body[i].x === x && this.body[i].y === y) return true;
+        }
+        return false;
+    }
+
     private render() {
         this.group.clear(true, true);
 
@@ -97,10 +101,5 @@ export class Snake {
 
     public getHead(): Coordinate {
         return this.body[0];
-    }
-
-    public grow() {
-        const tail = this.body[this.body.length - 1];
-        this.body.push({ ...tail });
     }
 }
