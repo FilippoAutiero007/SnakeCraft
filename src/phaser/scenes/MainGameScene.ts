@@ -16,6 +16,8 @@ export class MainGameScene extends Phaser.Scene {
     private score: number = 0;
     private isGameOver: boolean = false;
     private spawnTimer: number = 0;
+    private activePowerUp: PowerUpType = PowerUpType.NONE;
+    private powerUpTimer: Phaser.Time.TimerEvent | null = null;
 
     constructor() {
         super({ key: 'MainGameScene' });
@@ -52,6 +54,11 @@ export class MainGameScene extends Phaser.Scene {
         // Reset state
         this.score = 0;
         this.isGameOver = false;
+        this.activePowerUp = PowerUpType.NONE;
+        if (this.powerUpTimer) {
+            this.powerUpTimer.destroy();
+            this.powerUpTimer = null;
+        }
         this.game.events.emit('scoreUpdate', 0);
     }
 
@@ -79,13 +86,22 @@ export class MainGameScene extends Phaser.Scene {
         const block = this.worldManager.getBlock(next.x, next.y);
 
         // Collision: Self
-        if (this.snake.isOccupying(next.x, next.y)) {
+        if (this.snake.isOccupying(next.x, next.y) && this.activePowerUp !== PowerUpType.GHOST_SHIELD) {
             this.handleGameOver();
             return;
         }
 
         // Collision: World
-        if (block === BlockType.STONE || block === BlockType.BEDROCK || block === BlockType.LAVA) {
+        const isShielded = this.activePowerUp === PowerUpType.GHOST_SHIELD;
+        if (block === BlockType.STONE || block === BlockType.BEDROCK) {
+            if (isShielded && block === BlockType.STONE) {
+                // Ghost shield can break stone blocks
+                this.worldManager.removeBlock(next.x, next.y);
+            } else {
+                this.handleGameOver();
+                return;
+            }
+        } else if (block === BlockType.LAVA && !isShielded) {
             this.handleGameOver();
             return;
         }
@@ -120,18 +136,38 @@ export class MainGameScene extends Phaser.Scene {
         const types = [PowerUpType.SPEED_BOOST, PowerUpType.GHOST_SHIELD, PowerUpType.LASER_EYES];
         const random = types[Math.floor(Math.random() * types.length)];
 
+        // Clear any existing power-up timer
+        if (this.powerUpTimer) {
+            this.powerUpTimer.destroy();
+            this.powerUpTimer = null;
+        }
+
+        // Set active power-up
+        this.activePowerUp = random;
+
         // Notify React UI
         this.game.events.emit('uiUpdate', { powerUp: random, powerUpTime: 600 });
 
-        // TODO: Apply effect logic here (e.g. speed boost reduces moveInterval)
+        // Apply effect logic based on power-up type
         if (random === PowerUpType.SPEED_BOOST) {
             this.moveInterval = 50;
-            // Reset after time? Handled by a timer or React tells us?
-            // Usually game logic should handle it.
-            this.time.delayedCall(10000, () => {
-                this.moveInterval = 100;
-                this.game.events.emit('uiUpdate', { powerUp: PowerUpType.NONE, powerUpTime: 0 });
-            });
+        }
+
+        // Set timer to reset power-up after 10 seconds (600 ticks at ~60fps = ~10s)
+        this.powerUpTimer = this.time.delayedCall(10000, () => {
+            this.resetPowerUp();
+        });
+    }
+
+    private resetPowerUp() {
+        if (this.activePowerUp === PowerUpType.SPEED_BOOST) {
+            this.moveInterval = 100;
+        }
+        this.activePowerUp = PowerUpType.NONE;
+        this.game.events.emit('uiUpdate', { powerUp: PowerUpType.NONE, powerUpTime: 0 });
+        if (this.powerUpTimer) {
+            this.powerUpTimer.destroy();
+            this.powerUpTimer = null;
         }
     }
 
