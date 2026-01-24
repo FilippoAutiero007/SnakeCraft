@@ -169,15 +169,50 @@ const Game: React.FC<GameProps> = ({
         />
       )}
 
-      {/* Mobile Touch Layer for Swipe/Tap - Can be moved to Phaser Input but keeping here for consistency with UI */}
-      <div className="absolute inset-0 z-10 md:hidden pointer-events-auto touch-none"
-        onTouchStart={(e) => {
-          // Simple pass-through or re-implement swipe detection here to send to Phaser
-          // Ideally Phaser handles this, but if we want to reuse existing logic:
-          // We can implement swipe here and call handleInput
-        }}
-      />
+      {/* Mobile Touch Layer for Swipe/Tap */}
+      <MobileTouchLayer onInput={handleInput} />
     </div>
+  );
+};
+
+// Mobile swipe detection component
+const MobileTouchLayer: React.FC<{ onInput: (dir: Direction) => void }> = ({ onInput }) => {
+  const touchStartRef = React.useRef<{ x: number; y: number } | null>(null);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    touchStartRef.current = { x: touch.clientX, y: touch.clientY };
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!touchStartRef.current) return;
+    
+    const touch = e.changedTouches[0];
+    const dx = touch.clientX - touchStartRef.current.x;
+    const dy = touch.clientY - touchStartRef.current.y;
+    const minSwipe = 30; // Minimum swipe distance
+    
+    if (Math.abs(dx) > Math.abs(dy)) {
+      // Horizontal swipe
+      if (Math.abs(dx) > minSwipe) {
+        onInput(dx > 0 ? Direction.RIGHT : Direction.LEFT);
+      }
+    } else {
+      // Vertical swipe
+      if (Math.abs(dy) > minSwipe) {
+        onInput(dy > 0 ? Direction.DOWN : Direction.UP);
+      }
+    }
+    
+    touchStartRef.current = null;
+  };
+
+  return (
+    <div
+      className="absolute inset-0 z-10 md:hidden pointer-events-auto touch-none"
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+    />
   );
 };
 
