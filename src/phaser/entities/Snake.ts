@@ -102,4 +102,15 @@ export class Snake {
     public getHead(): Coordinate {
         return this.body[0];
     }
+
+    public getDirection(): Direction {
+        return this.direction;
+    }
+
+    public updateSkin(skinId: string) {
+        const skin = SKINS.find(s => s.id === skinId) || SKINS[0];
+        const colorInt = parseInt(skin.color.replace('#', '0x'), 16);
+        this.bodyColor = colorInt;
+        this.render();
+    }
 }

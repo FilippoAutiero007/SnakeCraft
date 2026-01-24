@@ -14,10 +14,14 @@ export class MainGameScene extends Phaser.Scene {
     private lastMoveTime: number = 0;
     private moveInterval: number = 100; // ms
     private score: number = 0;
+    private health: number = 100;
     private isGameOver: boolean = false;
     private spawnTimer: number = 0;
     private activePowerUp: PowerUpType = PowerUpType.NONE;
     private powerUpTimer: Phaser.Time.TimerEvent | null = null;
+    private isTutorial: boolean = false;
+    private combo: number = 0;
+    private comboTimer: number = 0;
 
     constructor() {
         super({ key: 'MainGameScene' });
@@ -30,6 +34,7 @@ export class MainGameScene extends Phaser.Scene {
         const startY = 10;
         const skin = this.registry.get('skin') || 'classic';
         const level = this.registry.get('level') || 1;
+        this.isTutorial = this.registry.get('isTutorial') || false;
 
         this.snake = new Snake(this, startX, startY, 3, skin);
         this.worldManager = new WorldManager(this, level);
@@ -46,20 +51,36 @@ export class MainGameScene extends Phaser.Scene {
             if (this.snake && !this.isGameOver) this.snake.setDirection(dir);
         });
 
+        // Listen for ability trigger (LASER_EYES)
+        this.game.events.on('triggerAbility', () => {
+            if (this.activePowerUp === PowerUpType.LASER_EYES) {
+                this.fireLaser();
+            }
+        });
+
         // Listen for skin updates
         this.game.events.on('updateSkin', (newSkin: string) => {
-            console.log('Skin update requested:', newSkin);
+            if (this.snake) {
+                this.snake.updateSkin(newSkin);
+            }
         });
 
         // Reset state
         this.score = 0;
+        this.health = 100;
+        this.combo = 0;
+        this.comboTimer = 0;
         this.isGameOver = false;
         this.activePowerUp = PowerUpType.NONE;
         if (this.powerUpTimer) {
             this.powerUpTimer.destroy();
             this.powerUpTimer = null;
         }
+        
+        // Emit initial UI state
         this.game.events.emit('scoreUpdate', 0);
+        this.game.events.emit('healthUpdate', 100);
+        this.game.events.emit('uiUpdate', { combo: 0 });
     }
 
     update(time: number, delta: number) {
@@ -97,29 +118,47 @@ export class MainGameScene extends Phaser.Scene {
             if (isShielded && block === BlockType.STONE) {
                 // Ghost shield can break stone blocks
                 this.worldManager.removeBlock(next.x, next.y);
-            } else {
+            } else if (block === BlockType.BEDROCK) {
                 this.handleGameOver();
                 return;
+            } else {
+                // Stone does damage but doesn't kill instantly
+                this.takeDamage(20);
+                if (this.health <= 0) return;
+                // Bounce back - don't move
+                return;
             }
-        } else if (block === BlockType.LAVA && !isShielded) {
-            this.handleGameOver();
-            return;
+        } else if (block === BlockType.LAVA) {
+            if (!isShielded) {
+                this.takeDamage(30);
+                if (this.health <= 0) return;
+            }
+        } else if (block === BlockType.MAGMA && !isShielded) {
+            this.takeDamage(5);
+        } else if (block === BlockType.TRAP && !isShielded) {
+            this.takeDamage(15);
         }
 
         let grow = false;
         if (block === BlockType.DIRT) {
-            this.score += 10;
+            this.addScore(10);
             grow = true;
-            this.game.events.emit('scoreUpdate', this.score);
             this.worldManager.removeBlock(next.x, next.y);
         } else if (block === BlockType.GOLD) {
-            this.score += 50;
+            this.addScore(50);
             grow = true;
-            this.game.events.emit('scoreUpdate', this.score);
             this.worldManager.removeBlock(next.x, next.y);
         } else if (block === BlockType.POWERUP_BOX) {
             this.handlePowerUp();
             this.worldManager.removeBlock(next.x, next.y);
+        }
+        
+        // Update combo timer
+        if (this.comboTimer > 0) {
+            this.comboTimer--;
+        } else if (this.combo > 0) {
+            this.combo = 0;
+            this.game.events.emit('uiUpdate', { combo: 0 });
         }
 
         this.snake.move(grow);
@@ -169,6 +208,69 @@ export class MainGameScene extends Phaser.Scene {
             this.powerUpTimer.destroy();
             this.powerUpTimer = null;
         }
+    }
+
+    private addScore(base: number) {
+        // Combo bonus
+        this.combo++;
+        this.comboTimer = 30; // ~0.5 seconds at 60fps tick rate
+        
+        const comboMultiplier = 1 + (this.combo * 0.1); // 10% bonus per combo
+        const finalScore = Math.floor(base * comboMultiplier);
+        
+        this.score += finalScore;
+        this.game.events.emit('scoreUpdate', this.score);
+        this.game.events.emit('uiUpdate', { combo: this.combo });
+    }
+
+    private takeDamage(amount: number) {
+        if (this.isTutorial) return;
+        
+        this.health = Math.max(0, this.health - amount);
+        this.game.events.emit('healthUpdate', this.health);
+        this.cameras.main.shake(100, 0.02);
+        
+        if (this.health <= 0) {
+            this.handleGameOver();
+        }
+    }
+
+    private fireLaser() {
+        if (!this.snake) return;
+        
+        const head = this.snake.getHead();
+        const dir = this.snake.getDirection();
+        
+        // Create laser beam visual
+        let dx = 0, dy = 0;
+        switch (dir) {
+            case Direction.UP: dy = -1; break;
+            case Direction.DOWN: dy = 1; break;
+            case Direction.LEFT: dx = -1; break;
+            case Direction.RIGHT: dx = 1; break;
+        }
+        
+        // Destroy blocks in laser path (up to 10 blocks)
+        for (let i = 1; i <= 10; i++) {
+            const tx = head.x + dx * i;
+            const ty = head.y + dy * i;
+            const block = this.worldManager.getBlock(tx, ty);
+            
+            if (block === BlockType.BEDROCK) break;
+            
+            if (block === BlockType.STONE || block === BlockType.DIRT || block === BlockType.GOLD) {
+                this.worldManager.removeBlock(tx, ty);
+                this.score += 5;
+            }
+            
+            // Draw laser effect
+            const px = tx * CELL_SIZE_PX + CELL_SIZE_PX / 2;
+            const py = ty * CELL_SIZE_PX + CELL_SIZE_PX / 2;
+            const laserRect = this.add.rectangle(px, py, CELL_SIZE_PX, CELL_SIZE_PX, 0xff0000, 0.8);
+            this.time.delayedCall(200, () => laserRect.destroy());
+        }
+        
+        this.game.events.emit('scoreUpdate', this.score);
     }
 
     private handleGameOver() {
