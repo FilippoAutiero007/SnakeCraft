@@ -1,0 +1,18 @@
+Screenshot del Menu Principale - SnakeCraft
+
+Data: 29 Gennaio 2026
+
+Il gioco è stato caricato correttamente su https://snakecraft.vercel.app/
+
+Elementi visibili:
+- Logo "SNAKE CRAFT" con stile moderno
+- Bottone "🔐 Accedi con Google" (in alto a destra)
+- Statistiche: 0 CHOCOLATES, 0 HIGH SCORE
+- Bottone principale "PLAY GAME - LEVEL 1 UNLOCKED"
+- Bottoni menu: SHOP, TUTORIAL, RANKS, SETTINGS
+- Design dark theme con sfondo scuro e elementi luminosi
+- UI pulita e ben organizzata
+
+Stato: ✅ FUNZIONANTE
+Build: READY (production)
+Performance: Caricamento rapido
