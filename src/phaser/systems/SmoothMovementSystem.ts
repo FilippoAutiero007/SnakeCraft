@@ -52,7 +52,7 @@ export class SmoothMovementSystem {
             x: endX,
             y: endY,
             duration: this.interpolationDuration,
-            ease: Phaser.Math.Easing.Linear.InOut,
+            ease: 'Linear',
             onComplete: () => {
                 this.tweens.delete(entityId);
             }
