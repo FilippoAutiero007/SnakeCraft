@@ -120,6 +120,14 @@ export const generateBlock = (
       if (iceNoise > 0.8) return BlockType.ICE;
   }
 
+  // Desert traps (quicksand)
+  if (biome === BiomeType.DESERT) {
+      const trapNoise = Math.sin(x * 0.15) + Math.cos(y * 0.15);
+      if (trapNoise > 1.5 && distanceFromSpawn > safeZoneRadius) {
+          return BlockType.TRAP;
+      }
+  }
+
   return BlockType.EMPTY;
 };
 
@@ -127,9 +135,34 @@ export const generateBlock = (
 
 export const getItemToSpawn = (level: number, biome: BiomeType): BlockType => {
     const rand = Math.random();
-    // 76% Chocolate, 14% Gold, 10% PowerUp
-    // Future: could use biome to influence spawn rates
-    if (rand < 0.76) return BlockType.DIRT;
-    else if (rand < 0.90) return BlockType.GOLD;
+    
+    // Biome affects spawn rates
+    let dirtChance = 0.76;
+    let goldChance = 0.90;
+    
+    if (biome === BiomeType.DESERT) {
+        // More gold in desert
+        goldChance = 0.85;
+    } else if (biome === BiomeType.OBSIDIAN_WASTE) {
+        // More power-ups in dangerous areas
+        goldChance = 0.88;
+    }
+    
+    if (rand < dirtChance) return BlockType.DIRT;
+    else if (rand < goldChance) return BlockType.GOLD;
     else return BlockType.POWERUP_BOX;
+};
+
+// Get biome environmental effects
+export const getBiomeEffect = (biome: BiomeType): { type: string; value: number } | null => {
+    switch (biome) {
+        case BiomeType.DESERT:
+            return { type: 'heat', value: 2 }; // Gradual damage
+        case BiomeType.TUNDRA:
+            return { type: 'cold', value: 0.8 }; // Slower movement
+        case BiomeType.OBSIDIAN_WASTE:
+            return { type: 'toxic', value: 3 }; // Higher damage
+        default:
+            return null;
+    }
 };
