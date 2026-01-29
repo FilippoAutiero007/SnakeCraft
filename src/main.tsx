@@ -2,6 +2,7 @@ import { ClerkProvider } from "@clerk/clerk-react";
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
+import './index.css'; // Import Tailwind CSS
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 

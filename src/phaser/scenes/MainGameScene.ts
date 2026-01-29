@@ -1,6 +1,6 @@
 
 import Phaser from 'phaser';
-import { Snake } from '../entities/Snake';
+import { SnakeSmooth as Snake } from '../entities/SnakeSmooth'; // Usa movimento fluido
 import { WorldManager } from '../entities/WorldManager';
 import { Boss, BossType } from '../entities/Boss';
 import { Direction, BlockType, PowerUpType, UpgradeType, ConsumableType } from '../../types';
@@ -90,6 +90,11 @@ export class MainGameScene extends Phaser.Scene {
 
         const initialLength = this.consumablesUsed.HEAD_START ? 10 : 3;
         this.snake = new Snake(this, startX, startY, initialLength, skin);
+        
+        // Configura velocità di interpolazione del movimento
+        if (this.snake instanceof Snake) {
+            this.snake.setMoveSpeed(this.moveInterval);
+        }
         this.worldManager = new WorldManager(this, level);
         this.worldManager.update(startX, startY);
 
